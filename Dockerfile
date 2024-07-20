@@ -1,9 +1,64 @@
+# Usar a imagem base oficial do n8n
 FROM n8nio/n8n:latest
 
-WORKDIR /data
+# Mudar para o usuário root para instalar dependências
+USER root
 
-EXPOSE $PORT
+# Instalar dependências necessárias para o Puppeteer
+RUN apt-get update && apt-get install -y \
+    gconf-service \
+    libasound2 \
+    libatk1.0-0 \
+    libc6 \
+    libcairo2 \
+    libcups2 \
+    libdbus-1-3 \
+    libexpat1 \
+    libfontconfig1 \
+    libgcc1 \
+    libgconf-2-4 \
+    libgdk-pixbuf2.0-0 \
+    libglib2.0-0 \
+    libgtk-3-0 \
+    libnspr4 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libstdc++6 \
+    libx11-6 \
+    libx11-xcb1 \
+    libxcb1 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    libxi6 \
+    libxrandr2 \
+    libxrender1 \
+    libxss1 \
+    libxtst6 \
+    ca-certificates \
+    fonts-liberation \
+    libappindicator1 \
+    libnss3 \
+    lsb-release \
+    xdg-utils \
+    wget
 
-ENV N8N_USER_ID=root
+# Instalar o Puppeteer e o nó personalizado n8n-nodes-puppeteer
+RUN npm install puppeteer n8n-nodes-puppeteer
 
-CMD export N8N_PORT=$PORT && n8n start
+# Instalar fontes adicionais (opcional, mas pode ser útil para renderização)
+RUN apt-get install -y fonts-noto-color-emoji fonts-noto-cjk
+
+# Limpar cache do apt para reduzir o tamanho da imagem
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Voltar para o usuário node (padrão do n8n)
+USER node
+
+# Definir variáveis de ambiente para o Puppeteer
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
+# O comando padrão da imagem base será mantido
